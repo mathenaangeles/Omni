@@ -1,0 +1,63 @@
+name: omni
+description: "This is a cross-platform application built using the Gemini API, Flutter, and Firebase."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.0.0 
+  cupertino_icons: ^1.0.8
+  firebase_core: ^3.3.0
+  firebase_auth: ^5.1.4
+  firebase_ui_auth: ^1.15.0
+  cloud_firestore: ^5.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/logo.png
+    - assets/user.png
+    - assets/cover_image.jpg
+    - assets/red_sticker.png
+    - assets/yellow_sticker.png
+    - assets/green_sticker.png
+
+  fonts:
+  - family: Arial
+    fonts:
+      - asset: assets/fonts/arial.ttf
+        weight: 400
+        style: normal
+      - asset: assets/fonts/arial_medium.ttf
+        weight: 500
+        style: normal
+      - asset: assets/fonts/arial_bold.ttf
+        weight: 700
+        style: normal
+      - asset: assets/fonts/arial_italic.ttf
+        weight: 400
+        style: italic
+      - asset: assets/fonts/arial_bold_italic.ttf
+        weight: 700
+        style: italic
+  - family: Cooper BT
+    fonts:
+      - asset: assets/fonts/cooperBT.ttf
+        weight: 400
+        style: normal
+  - family: Hobo
+    fonts:
+      - asset: assets/fonts/hobo.ttf
+        weight: 400
+        style: normal

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "577453832706",
+    "project_id": "omni-ff2a3",
+    "storage_bucket": "omni-ff2a3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:577453832706:android:61ddedba226e73f8d2c51b",
+        "android_client_info": {
+          "package_name": "com.omni.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQg7NxQ6e82dpT24PGlFrp1Sb_j7lCo4w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
