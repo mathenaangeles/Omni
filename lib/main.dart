@@ -155,23 +155,12 @@ class Home extends StatelessWidget {
             ),
             Container(
               padding: const EdgeInsets.all(16.0),
-              color: Colors.white, // Set the background color to white
+              color: Colors.white,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Padding(
-                  //   padding: const EdgeInsets.only(bottom: 16.0),
-                  //   child: Text(
-                  //     'Education without barriers',
-                  //     style: TextStyle(
-                  //         fontSize: 30,
-                  //         fontFamily: 'Hobo',
-                  //         fontWeight: FontWeight.bold,
-                  //         color: Colors.black),
-                  //   ),
-                  // ),
                   SizedBox(
-                    height: 300, // Specify a fixed height for the Row
+                    height: 300,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

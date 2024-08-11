@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthGate extends StatelessWidget {
   final Widget page;
@@ -115,10 +116,9 @@ class _LoginState extends State<Login> {
                 child: Card(
                   color: const Color.fromARGB(255, 255, 215, 215),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10), // Rounded corners
+                    borderRadius: BorderRadius.circular(10),
                     side: BorderSide(
-                      color: theme
-                          .colorScheme.error, // Border color same as error text
+                      color: theme.colorScheme.error,
                       width: 1,
                     ),
                   ),
@@ -194,6 +194,7 @@ class _LoginState extends State<Login> {
               ),
               obscureText: true,
             ),
+            const SizedBox(height: 16),
             const SizedBox(height: 20),
             if (_isLoading)
               const CircularProgressIndicator()
@@ -233,6 +234,9 @@ class _RegistrationState extends State<Registration> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   String? _errorMessage;
+  String _selectedUserType = 'Student';
+
+  final List<String> _userTypes = ['Student', 'Teacher'];
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -243,10 +247,17 @@ class _RegistrationState extends State<Registration> {
     });
 
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'userType': _selectedUserType,
+      });
       Navigator.pushReplacementNamed(context, '/profile');
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -319,11 +330,9 @@ class _RegistrationState extends State<Registration> {
                   child: Card(
                     color: const Color.fromARGB(255, 255, 215, 215),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(10), // Rounded corners
+                      borderRadius: BorderRadius.circular(10),
                       side: BorderSide(
-                        color: theme.colorScheme
-                            .error, // Border color same as error text
+                        color: theme.colorScheme.error,
                         width: 1,
                       ),
                     ),
@@ -416,6 +425,51 @@ class _RegistrationState extends State<Registration> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: DropdownButtonFormField<String>(
+                  value: _selectedUserType,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedUserType = newValue!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'User Type',
+                    labelStyle: TextStyle(
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                  items:
+                      _userTypes.map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: TextStyle(
+                          color: theme.colorScheme.onPrimary,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  dropdownColor: theme
+                      .colorScheme.primary, // Set background color of the menu
+                  iconEnabledColor: theme.colorScheme.onPrimary, // Icon color
+                  iconSize: 24, // Adjust icon size if needed
+                ),
               ),
               const SizedBox(height: 20),
               _isLoading
