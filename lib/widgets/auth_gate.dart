@@ -252,12 +252,15 @@ class _RegistrationState extends State<Registration> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
+      String uid = userCredential.user!.uid;
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'userType': _selectedUserType,
       });
+      if (_selectedUserType == 'Student') {
+        await FirebaseFirestore.instance.collection('students').doc(uid).set({
+          'firstName': '',
+        });
+      }
       Navigator.pushReplacementNamed(context, '/profile');
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -465,10 +468,9 @@ class _RegistrationState extends State<Registration> {
                       ),
                     );
                   }).toList(),
-                  dropdownColor: theme
-                      .colorScheme.primary, // Set background color of the menu
-                  iconEnabledColor: theme.colorScheme.onPrimary, // Icon color
-                  iconSize: 24, // Adjust icon size if needed
+                  dropdownColor: theme.colorScheme.primary,
+                  iconEnabledColor: theme.colorScheme.onPrimary,
+                  iconSize: 24,
                 ),
               ),
               const SizedBox(height: 20),

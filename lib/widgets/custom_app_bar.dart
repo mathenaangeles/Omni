@@ -26,7 +26,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             backgroundColor:
                 currentRoute == '/' ? Colors.white.withOpacity(0.06) : null,
           ),
-          child: const Text('Home'),
+          child:
+              const Text('Home', style: TextStyle(fontWeight: FontWeight.w400)),
         ),
         const SizedBox(width: 10),
         TextButton(
@@ -38,7 +39,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ? Colors.white.withOpacity(0.06)
                 : null,
           ),
-          child: const Text('Assistant'),
+          child: const Text('Assistant',
+              style: TextStyle(fontWeight: FontWeight.w400)),
         ),
         const SizedBox(width: 10),
         StreamBuilder<User?>(
@@ -62,6 +64,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     },
                     style: TextButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor:
+                          Theme.of(context).colorScheme.onSecondary,
                     ),
                     child: const Text('Logout'),
                   ),
@@ -76,6 +80,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     },
                     style: TextButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor:
+                          Theme.of(context).colorScheme.onSecondary,
                     ),
                     child: const Text('Join Now'),
                   ),

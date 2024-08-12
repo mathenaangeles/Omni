@@ -1,3 +1,6 @@
+*.env
+**/.venv
+
 # Miscellaneous
 *.class
 *.log

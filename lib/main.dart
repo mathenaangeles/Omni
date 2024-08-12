@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:omni/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import './pages/profile.dart';
 import './pages/assistant.dart';
@@ -12,6 +13,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await dotenv.load(fileName: "../.env");
   runApp(const App());
 }
 
@@ -28,7 +30,7 @@ class App extends StatelessWidget {
           primary: Color(0xFF097d4c),
           onPrimary: Color(0xFFf1ead1),
           secondary: Color(0xFF2f8a97),
-          onSecondary: Color(0xFFf1ead1),
+          onSecondary: Colors.white,
           error: Color(0xFFd14938),
           onError: Color(0xFFf1ead1),
           brightness: Brightness.light,
@@ -41,7 +43,7 @@ class App extends StatelessWidget {
             foregroundColor: const Color(0xFFf1ead1),
             textStyle: const TextStyle(
               fontFamily: 'Arial',
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),
@@ -52,7 +54,7 @@ class App extends StatelessWidget {
         '/assistant': (context) => Assistant(),
         '/login': (context) => const Login(),
         '/register': (context) => const Registration(),
-        '/profile': (context) => AuthGate(page: Profile()),
+        '/profile': (context) => const AuthGate(page: Profile()),
       },
     );
   }
