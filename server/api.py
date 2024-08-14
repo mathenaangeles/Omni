@@ -15,6 +15,16 @@ db = firestore.Client()
 
 llama_index = LlamaIndex()
 
+def index_documents_for_student(student_id):
+    """ Index documents for a specific student from Firestore """
+    student_docs = db.collection('students').document(student_id).collection('documents').stream()
+
+    llama_index.clear() 
+
+    for doc in student_docs:
+        doc_data = doc.to_dict()
+        llama_index.add_document(doc_data['content'])
+
 @app.route('/generate_report', methods=['POST'])
 def generate_report():
     try:
@@ -22,26 +32,20 @@ def generate_report():
         if not student_id:
             return jsonify({'error': 'Student ID is required'}), 400
 
-        student_docs = db.collection('students').document(student_id).collection('documents').stream()
-
-        llama_index.clear()
-
-        for doc in student_docs:
-            doc_data = doc.to_dict()
-            llama_index.add_document(doc_data['content']) 
-
+        index_documents_for_student(student_id)
 
         prompt = """
-        Generate a detailed progress report for a student using the following indexed documents:
-        - Academic Grade
-        - Employment Grade
-        - Community Grade
-        - Academic Report
-        - Employment Report
-        - Community Report
-        - Skill Gaps
+        Using the indexed documents for the student, generate a detailed progress report. 
+        The report should include:
+        - Academic Grade (Proficient, Satisfactory, Developing, Emerging, Skill Not Observed)
+        - Employment Grade (Proficient, Satisfactory, Developing, Emerging, Skill Not Observed)
+        - Community Grade (Proficient, Satisfactory, Developing, Emerging, Skill Not Observed)
+        - Academic Report (detailed paragraph)
+        - Employment Report (detailed paragraph)
+        - Community Report (detailed paragraph)
+        - Skill Gaps (list of identified skill gaps)
 
-        The grades should be either Proficient, Satisfactory, Developing, Emerging, or Skill Not Observed. The reports should provide detailed paragraphs and identify skill gaps.
+        Ensure that the responses are detailed and based on the content of the indexed documents.
         """
 
         response = model.generate_content(prompt)
