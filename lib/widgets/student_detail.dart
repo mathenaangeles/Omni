@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class StudentDetail extends StatefulWidget {
   final String studentId;
@@ -69,9 +71,9 @@ class _StudentDetailState extends State<StudentDetail> {
       'school': userData['school'] ?? '',
       'address': userData['address'] ?? '',
       'profilePictureUrl': userData['profilePictureUrl'] ?? '',
-      'academicGrade': studentData['academicGrade'] ?? 'Skill Not Observed',
-      'employmentGrade': studentData['employmentGrade'] ?? 'Skill Not Observed',
-      'communityGrade': studentData['communityGrade'] ?? 'Skill Not Observed',
+      'academicGrade': studentData['academicGrade'] ?? '',
+      'employmentGrade': studentData['employmentGrade'] ?? '',
+      'communityGrade': studentData['communityGrade'] ?? '',
       'academicReport':
           studentData['academicReport'] ?? 'No academic report found',
       'employmentReport':
@@ -96,6 +98,43 @@ class _StudentDetailState extends State<StudentDetail> {
       setState(() {
         _isEditing = false;
       });
+    }
+  }
+
+  Future<void> _generateReport() async {
+    final studentRef = _firestore.collection('students').doc(widget.studentId);
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:5000/generate_report'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'student_id': widget.studentId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        await studentRef.update({
+          'academicGrade': data['academicGrade'] ?? 'Skill Not Observed',
+          'employmentGrade': data['employmentGrade'] ?? 'Skill Not Observed',
+          'communityGrade': data['communityGrade'] ?? 'Skill Not Observed',
+          'academicReport': data['academicReport'] ?? '',
+          'employmentReport': data['employmentReport'] ?? '',
+          'communityReport': data['communityReport'] ?? '',
+          'skillGaps': List<String>.from(data['skillGaps'] ?? []),
+        });
+        Navigator.of(context).pop();
+      } else {
+        throw Exception('Failed to generate report');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to generate report.')),
+      );
     }
   }
 
@@ -320,7 +359,7 @@ class _StudentDetailState extends State<StudentDetail> {
                                   ),
                                   const SizedBox(height: 16),
                                   ElevatedButton(
-                                    onPressed: () {},
+                                    onPressed: _generateReport,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor:
                                           theme.colorScheme.primary,
@@ -397,17 +436,35 @@ class _StudentDetailState extends State<StudentDetail> {
                             if (isEditable)
                               Align(
                                 alignment: Alignment.centerLeft,
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _isEditing = true;
-                                    });
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: theme.colorScheme.primary,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: const Text('Edit Report'),
+                                child: Row(
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _isEditing = true;
+                                        });
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            theme.colorScheme.primary,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: const Text('Edit Report'),
+                                    ),
+                                    const SizedBox(
+                                        width: 10), // Spacing between buttons
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        // Add upload functionality here
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            theme.colorScheme.secondary,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: const Text('Upload'),
+                                    ),
+                                  ],
                                 ),
                               ),
                           ],
@@ -425,9 +482,15 @@ class _StudentDetailState extends State<StudentDetail> {
   }
 
   Widget _buildGradeDropdown(
-      String label, String value, ValueChanged<String?> onChanged) {
+    String label,
+    String value,
+    ValueChanged<String?> onChanged,
+  ) {
+    String safeValue =
+        _grades.containsKey(value) ? value : 'Skill Not Observed';
+
     return DropdownButtonFormField<String>(
-      value: value,
+      value: safeValue,
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
@@ -456,6 +519,12 @@ class _StudentDetailState extends State<StudentDetail> {
           ),
         );
       }).toList(),
+      validator: (value) {
+        if (value == null || !_grades.containsKey(value)) {
+          return 'Please select a valid grade';
+        }
+        return null;
+      },
     );
   }
 
