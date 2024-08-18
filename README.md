@@ -1,6 +1,6 @@
 <img src="https://github.com/mathenaangeles/Omni/blob/main/assets/green_logo.png" width="100%">
-#Omni
 
+# Omni
 Omni is a personalized learning app for persons with special needs. It was built using the Gemini API.
 
 ## Getting Started
