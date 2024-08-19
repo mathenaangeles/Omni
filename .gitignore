@@ -1,5 +1,6 @@
 *.env
 **/.venv
+**/service_account_key.json
 
 # Miscellaneous
 *.class
