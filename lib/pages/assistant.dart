@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:omni/widgets/custom_app_bar.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class Assistant extends StatefulWidget {
   @override
@@ -33,22 +32,20 @@ class _AssistantState extends State<Assistant> {
 
       final docRef = await messagesRef.add({
         'prompt': message,
-        'status': 'PENDING',
-        'createdAt': FieldValue.serverTimestamp(),
       });
 
       while (true) {
         await Future.delayed(Duration(seconds: 2));
         final docSnapshot = await docRef.get();
-        final status = docSnapshot.data()?['status'];
+        final state = docSnapshot.data()?['status']['state'];
 
-        if (status == 'COMPLETED') {
+        if (state == 'COMPLETED') {
           final response = docSnapshot.data()?['response'];
           setState(() {
             _messages.add({
-              'text': response ?? 'No response received.',
+              'text': response ?? 'I\'m sorry. I can\'t answer that.',
               'sender': 'system',
-              'feedback': null
+              'feedback': null,
             });
           });
           break;
@@ -103,13 +100,23 @@ class _AssistantState extends State<Assistant> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            message['text'] ?? '',
-                            style: TextStyle(
-                              color:
-                                  isUserMessage ? Colors.white : Colors.black,
-                            ),
-                          ),
+                          isSystemMessage
+                              ? MarkdownBody(
+                                  data: message['text'] ?? '',
+                                  styleSheet: MarkdownStyleSheet(
+                                    p: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  message['text'] ?? '',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
                           if (isSystemMessage) ...[
                             const SizedBox(height: 2),
                             Row(
@@ -178,7 +185,6 @@ class _AssistantState extends State<Assistant> {
                   IconButton(
                     icon: Icon(Icons.send, color: theme.colorScheme.primary),
                     onPressed: _sendMessage,
-                    color: theme.colorScheme.primary,
                   ),
                 ],
               ),

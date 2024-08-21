@@ -1,4 +1,5 @@
 *.env
+**/.env
 **/.venv
 **/service_account_key.json
 

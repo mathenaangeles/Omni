@@ -41,8 +41,8 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: dotenv.env('FIREBASE_API_KEY_WEB'),
+  static FirebaseOptions web = FirebaseOptions(
+    apiKey: dotenv.get('FIREBASE_API_KEY_WEB'),
     appId: '1:577453832706:web:0810e5c1c5c3b882d2c51b',
     messagingSenderId: '577453832706',
     projectId: 'omni-ff2a3',
@@ -51,16 +51,16 @@ class DefaultFirebaseOptions {
     measurementId: 'G-CHJYK8D1XM',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: dotenv.env('FIREBASE_API_KEY_ANDROID'),
+  static FirebaseOptions android = FirebaseOptions(
+    apiKey: dotenv.get('FIREBASE_API_KEY_ANDROID'),
     appId: '1:577453832706:android:61ddedba226e73f8d2c51b',
     messagingSenderId: '577453832706',
     projectId: 'omni-ff2a3',
     storageBucket: 'omni-ff2a3.appspot.com',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: dotenv.env('FIREBASE_API_KEY_IOS'),
+  static FirebaseOptions ios = FirebaseOptions(
+    apiKey: dotenv.get('FIREBASE_API_KEY_IOS'),
     appId: '1:577453832706:ios:8f1e35574ca259efd2c51b',
     messagingSenderId: '577453832706',
     projectId: 'omni-ff2a3',
@@ -68,8 +68,8 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.omni',
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: dotenv.env('FIREBASE_API_KEY_MACOS'),
+  static FirebaseOptions macos = FirebaseOptions(
+    apiKey: dotenv.get('FIREBASE_API_KEY_MACOS'),
     appId: '1:577453832706:ios:8f1e35574ca259efd2c51b',
     messagingSenderId: '577453832706',
     projectId: 'omni-ff2a3',
@@ -77,8 +77,8 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.omni',
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: dotenv.env('FIREBASE_API_KEY_WINDOWS'),
+  static FirebaseOptions windows = FirebaseOptions(
+    apiKey: dotenv.get('FIREBASE_API_KEY_WINDOWS'),
     appId: '1:577453832706:web:1aa67b5d53643283d2c51b',
     messagingSenderId: '577453832706',
     projectId: 'omni-ff2a3',

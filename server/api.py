@@ -1,8 +1,10 @@
 import os
+import json
 import PyPDF2
 import textwrap
 import numpy as np
 from io import BytesIO
+from flask_cors import CORS
 from dotenv import load_dotenv
 import typing_extensions as typing
 import google.generativeai as genai
@@ -13,6 +15,7 @@ from google.cloud import firestore, storage
 
 load_dotenv()
 app = Flask(__name__)
+CORS(app)
 
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel(
@@ -125,7 +128,7 @@ def generate_report():
         student_embeddings = [doc.to_dict() for doc in student_embeddings_ref.stream()]
         if not student_embeddings:
             return jsonify({'message': 'No embeddings were found for the given student.'}), 404
-        query = """"What are the most relevant snippets that will inform a progress report detailing the performance of 
+        query = """What are the most relevant snippets that will inform a progress report detailing the performance of 
         a student in terms of their academics, employment, and community?"""
         context = get_context(query, student_embeddings)
         prompt = textwrap.dedent("""
@@ -153,6 +156,15 @@ def generate_report():
         response = model.generate_content(prompt, 
             generation_config={"response_mime_type": "application/json",
             "response_schema": Report})
+        report_data = response.text
+        try:
+            report_dict = json.loads(report_data)
+            if all(key in report_dict for key in Report.__annotations__.keys()):
+                return jsonify(report_dict), 200
+            else:
+                return jsonify({'message': 'ERROR: Invalid response format'}), 500
+        except (json.JSONDecodeError, TypeError) as e:
+            return jsonify({'message': 'ERROR: Failed to parse the report data.'}), 500
         return jsonify(response.text), 200
     except Exception as e:
         return jsonify({'message': str(e)}), 500

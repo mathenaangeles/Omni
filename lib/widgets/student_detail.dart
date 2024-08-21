@@ -1,8 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class StudentDetail extends StatefulWidget {
   final String studentId;
@@ -94,6 +98,7 @@ class _StudentDetailState extends State<StudentDetail> {
         'academicReport': _academicReport,
         'employmentReport': _employmentReport,
         'communityReport': _communityReport,
+        'skillGaps': _skillGaps,
       });
       setState(() {
         _isEditing = false;
@@ -118,24 +123,108 @@ class _StudentDetailState extends State<StudentDetail> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        await studentRef.update({
-          'academicGrade': data['academicGrade'] ?? 'Skill Not Observed',
-          'employmentGrade': data['employmentGrade'] ?? 'Skill Not Observed',
-          'communityGrade': data['communityGrade'] ?? 'Skill Not Observed',
-          'academicReport': data['academicReport'] ?? '',
-          'employmentReport': data['employmentReport'] ?? '',
-          'communityReport': data['communityReport'] ?? '',
-          'skillGaps': List<String>.from(data['skillGaps'] ?? []),
+        setState(() {
+          _academicGrade = data['academic_grade'] ?? 'Skill Not Observed';
+          _employmentGrade = data['employment_grade'] ?? 'Skill Not Observed';
+          _communityGrade = data['community_grade'] ?? 'Skill Not Observed';
+          _academicReport = data['academic_report'] ?? '';
+          _employmentReport = data['employment_report'] ?? '';
+          _communityReport = data['community_report'] ?? '';
+          _skillGaps = List<String>.from(data['skill_gaps'] ?? []);
         });
-        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'The report was generated successfully.',
+              style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+          ),
+        );
       } else {
-        throw Exception('Failed to generate report');
+        throw Exception('ERROR: Failed to generate a report.');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to generate report.')),
+        SnackBar(
+          content: Text(
+            'ERROR: $e',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     }
+  }
+
+  Future<void> uploadFile(BuildContext context, String studentID) async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+    if (result != null) {
+      try {
+        String fileName = result.files.single.name;
+        Reference ref =
+            FirebaseStorage.instance.ref().child('$studentID/$fileName');
+        UploadTask uploadTask;
+        if (kIsWeb) {
+          final data = result.files.single.bytes;
+          if (data != null) {
+            uploadTask = ref.putData(data);
+          } else {
+            throw 'No file data found';
+          }
+        } else {
+          final file = File(result.files.single.path!);
+          uploadTask = ref.putFile(file);
+        }
+        uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+          print(
+              'Progress: ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100} %');
+        });
+        await uploadTask;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'The file was uploaded successfully.',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+          ),
+        );
+      } catch (e) {
+        print('Upload failed: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No file selected')),
+      );
+    }
+  }
+
+  void _removeSkillGap(String skillGap) {
+    setState(() {
+      _skillGaps.remove(skillGap);
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchFiles() async {
+    List<Map<String, dynamic>> files = [];
+    final ListResult result =
+        await FirebaseStorage.instance.ref(widget.studentId).listAll();
+
+    for (var item in result.items) {
+      final String name = item.name;
+      final String url = await item.getDownloadURL();
+      files.add({'name': name, 'url': url});
+    }
+
+    return files;
   }
 
   @override
@@ -266,6 +355,28 @@ class _StudentDetailState extends State<StudentDetail> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Wrap(
+                                    spacing: 8.0,
+                                    runSpacing: 4.0,
+                                    children: _skillGaps.map((skillGap) {
+                                      return Chip(
+                                        label: Text(skillGap,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                color: theme
+                                                    .colorScheme.secondary)),
+                                        onDeleted: () =>
+                                            _removeSkillGap(skillGap),
+                                        deleteIcon: const Icon(Icons.close),
+                                        deleteIconColor:
+                                            theme.colorScheme.secondary,
+                                        side: BorderSide(
+                                            color: theme.colorScheme.secondary,
+                                            width: 2.0),
+                                      );
+                                    }).toList(),
+                                  ),
+                                  const SizedBox(height: 20),
                                   _buildGradeDropdown(
                                     'Academic Grade',
                                     _academicGrade,
@@ -275,7 +386,7 @@ class _StudentDetailState extends State<StudentDetail> {
                                       });
                                     },
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 20),
                                   _buildTextArea(
                                     'Academic Report',
                                     _academicReport,
@@ -285,7 +396,7 @@ class _StudentDetailState extends State<StudentDetail> {
                                       });
                                     },
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 20),
                                   _buildGradeDropdown(
                                     'Employment Grade',
                                     _employmentGrade,
@@ -296,7 +407,7 @@ class _StudentDetailState extends State<StudentDetail> {
                                       });
                                     },
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 20),
                                   _buildTextArea(
                                     'Employment Report',
                                     _employmentReport,
@@ -306,7 +417,7 @@ class _StudentDetailState extends State<StudentDetail> {
                                       });
                                     },
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 20),
                                   _buildGradeDropdown(
                                     'Community Grade',
                                     _communityGrade,
@@ -316,7 +427,7 @@ class _StudentDetailState extends State<StudentDetail> {
                                       });
                                     },
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 20),
                                   _buildTextArea(
                                     'Community Report',
                                     _communityReport,
@@ -451,11 +562,10 @@ class _StudentDetailState extends State<StudentDetail> {
                                       ),
                                       child: const Text('Edit Report'),
                                     ),
-                                    const SizedBox(
-                                        width: 10), // Spacing between buttons
+                                    const SizedBox(width: 10),
                                     ElevatedButton(
                                       onPressed: () {
-                                        // Add upload functionality here
+                                        uploadFile(context, widget.studentId);
                                       },
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor:
@@ -513,7 +623,7 @@ class _StudentDetailState extends State<StudentDetail> {
           value: entry.key,
           child: Text(
             entry.value,
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -532,6 +642,7 @@ class _StudentDetailState extends State<StudentDetail> {
       String label, String value, ValueChanged<String?> onChanged) {
     return TextFormField(
       initialValue: value,
+      onChanged: onChanged,
       maxLines: 4,
       decoration: InputDecoration(
         labelText: label,
@@ -552,7 +663,6 @@ class _StudentDetailState extends State<StudentDetail> {
               BorderSide(color: Theme.of(context).colorScheme.secondary),
         ),
       ),
-      onChanged: onChanged,
       validator: (value) {
         if (value == null || value.isEmpty) {
           return 'This field cannot be empty';
@@ -615,27 +725,26 @@ class SkillGapsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Wrap(
+      spacing: 8.0, // Space between chips horizontally
+      runSpacing: 8.0, // Space between chips vertically
       children: skillGaps.map((skillGap) {
-        return Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: Chip(
-            label: Text(
-              skillGap,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.secondary,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
-            ),
-            backgroundColor: Colors.transparent,
-            side: BorderSide(
+        return Chip(
+          label: Text(
+            skillGap,
+            style: TextStyle(
               color: Theme.of(context).colorScheme.secondary,
-              width: 2,
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
             ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.0),
-            ),
+          ),
+          backgroundColor: Colors.transparent,
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.secondary,
+            width: 2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
           ),
         );
       }).toList(),
